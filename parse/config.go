@@ -8,12 +8,12 @@ import (
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/engine-api/types"
 	"github.com/opencontainers/runc/libcontainer/user"
-	"github.com/opencontainers/specs/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 const (
 	// SpecVersion is the version of the opencontainers spec that will be created.
-	SpecVersion = "0.3.0"
+	SpecVersion = "0.5.0"
 
 	// DefaultApparmorProfile is docker engine's default apparmor profile for containers.
 	DefaultApparmorProfile = "docker-default"
