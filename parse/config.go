@@ -8,7 +8,7 @@ import (
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/engine-api/types"
 	"github.com/opencontainers/runc/libcontainer/user"
-	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/specs/specs-go"
 )
 
 const (
