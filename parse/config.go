@@ -114,10 +114,10 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 		Version: SpecVersion,
 		Platform: specs.Platform{
 			OS:   osType,
-			Arch: architecture,
+			Arch: "amd64",
 		},
 		Process: specs.Process{
-			Terminal: c.Config.Tty,
+			Terminal: false,
 			User:     specs.User{
 			// TODO: user stuffs
 			},
@@ -132,12 +132,10 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 					Soft: uint64(1024),
 				},
 			},
-			NoNewPrivileges: true,
-			ApparmorProfile: c.AppArmorProfile,
 		},
 		Root: specs.Root{
 			Path:     "rootfs",
-			Readonly: c.HostConfig.ReadonlyRootfs,
+			Readonly: true,
 		},
 		Mounts: []specs.Mount{},
 		Linux: specs.Linux{
@@ -173,8 +171,8 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 						Access: sPtr("rwm"),
 					},
 				},
-				DisableOOMKiller: c.HostConfig.Resources.OomKillDisable,
-				OOMScoreAdj:      &c.HostConfig.OomScoreAdj,
+				//DisableOOMKiller: c.HostConfig.Resources.OomKillDisable,
+				//OOMScoreAdj:      &c.HostConfig.OomScoreAdj,
 				Memory: &specs.Memory{
 					Limit:       uint64ptr(c.HostConfig.Resources.Memory),
 					Reservation: uint64ptr(c.HostConfig.Resources.MemoryReservation),
@@ -347,10 +345,10 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 		return nil, err
 	}
 
-	// parse devices
-	if err := parseDevices(config, c.HostConfig); err != nil {
-		return nil, err
-	}
+	// parse devices, left out for syscontainers gen
+	//if err := parseDevices(config, c.HostConfig); err != nil {
+	//	return nil, err
+	//}
 
 	// parse security opt
 	if err := parseSecurityOpt(config, c.HostConfig); err != nil {

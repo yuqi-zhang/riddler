@@ -31,7 +31,7 @@ const (
 
 `
 	// VERSION is the binary version.
-	VERSION = "v0.1.0"
+	VERSION = "syscontainer-test"
 
 	specConfig = "config.json"
 )

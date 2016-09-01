@@ -10,7 +10,7 @@ import (
 	"github.com/opencontainers/runc/libcontainer/devices"
 	"github.com/opencontainers/runc/libcontainer/label"
 	"github.com/opencontainers/runc/libcontainer/user"
-	"github.com/opencontainers/specs/specs-go"
+	"github.com/opencontainers/runtime-specs/specs-go"
 )
 
 func parseDevices(config *specs.Spec, hc *containertypes.HostConfig) error {
