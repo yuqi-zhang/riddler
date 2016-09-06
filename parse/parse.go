@@ -134,10 +134,10 @@ func parseSecurityOpt(config *specs.Spec, hc *containertypes.HostConfig) error {
 		}
 	}
 
-	// set default apparmor profile if possible
-	if config.Process.ApparmorProfile == "" && !hc.Privileged {
-		config.Process.ApparmorProfile = DefaultApparmorProfile
-	}
+	// set default apparmor profile if possible, but leave out if empty
+	//if config.Process.ApparmorProfile == "" && !hc.Privileged {
+		//config.Process.ApparmorProfile = DefaultApparmorProfile
+	//}
 	if config.Process.ApparmorProfile == "" && hc.Privileged {
 		config.Process.ApparmorProfile = "unconfined"
 	}

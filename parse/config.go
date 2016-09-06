@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	//"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
 	"github.com/docker/engine-api/types"
 	"github.com/opencontainers/runc/libcontainer/user"
@@ -152,20 +152,21 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 					Type: "mount",
 				},
 			},
-			UIDMappings: []specs.IDMapping{
-				{
-					ContainerID: 0,
-					HostID:      idroot,
-					Size:        idlen,
-				},
-			},
-			GIDMappings: []specs.IDMapping{
-				{
-					ContainerID: 0,
-					HostID:      idroot,
-					Size:        idlen,
-				},
-			},
+			// remove GID/UID mapping for syscontainers
+			//UIDMappings: []specs.IDMapping{
+				//{
+					//ContainerID: 0,
+					//HostID:      idroot,
+					//Size:        idlen,
+				//},
+			//},
+			//GIDMappings: []specs.IDMapping{
+				//{
+					//ContainerID: 0,
+					//HostID:      idroot,
+					//Size:        idlen,
+				//},
+			//},
 			Resources: &specs.Resources{
 				Devices: []specs.DeviceCgroup{
 					{
@@ -206,19 +207,19 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 		config.Process.Cwd = DefaultCurrentWorkingDirectory
 	}
 
-	// get the user
-	if c.Config.User != "" {
-		u, err := user.LookupUser(c.Config.User)
-		if err != nil {
-			config.Process.User = specs.User{
-				UID: uint32(u.Uid),
-				GID: uint32(u.Gid),
-			}
-		} else {
+	// get the user, ignored for system containers
+	//if c.Config.User != "" {
+		//u, err := user.LookupUser(c.Config.User)
+		//if err != nil {
+			//config.Process.User = specs.User{
+				//UID: uint32(u.Uid),
+				//GID: uint32(u.Gid),
+			//}
+		//} else {
 			//return nil, fmt.Errorf("Looking up user (%s) failed: %v", c.Config.User, err)
-			logrus.Warnf("Looking up user (%s) failed: %v", c.Config.User, err)
-		}
-	}
+			//logrus.Warnf("Looking up user (%s) failed: %v", c.Config.User, err)
+		//}
+	//}
 	// add the additional groups
 	for _, group := range c.HostConfig.GroupAdd {
 		g, err := user.LookupGroup(group)
@@ -230,9 +231,9 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 
 	// get the hostname, if the hostname is the name as the first 12 characters of the id,
 	// then set the hostname as the container name
-	if c.ID[:12] == c.Config.Hostname {
-		config.Hostname = strings.TrimPrefix(c.Name, "/")
-	}
+	//if c.ID[:12] == c.Config.Hostname {
+		//config.Hostname = strings.TrimPrefix(c.Name, "/")
+	//}
 
 	// set privileged
 	if c.HostConfig.Privileged {
@@ -285,15 +286,17 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 			Type: "pid",
 		})
 	}
-	if c.HostConfig.UsernsMode.Valid() && !c.HostConfig.NetworkMode.IsHost() && !c.HostConfig.PidMode.IsHost() && !c.HostConfig.Privileged {
-		config.Linux.Namespaces = append(config.Linux.Namespaces, specs.Namespace{
-			Type: "user",
-		})
-	} else {
+
+	// remove user namespace for syscontainers
+	//if c.HostConfig.UsernsMode.Valid() && !c.HostConfig.NetworkMode.IsHost() && !c.HostConfig.PidMode.IsHost() && !c.HostConfig.Privileged {
+		//config.Linux.Namespaces = append(config.Linux.Namespaces, specs.Namespace{
+			//Type: "user",
+		//})
+	//} else {
 		// reset uid and gid mappings
-		config.Linux.UIDMappings = []specs.IDMapping{}
-		config.Linux.GIDMappings = []specs.IDMapping{}
-	}
+		//config.Linux.UIDMappings = []specs.IDMapping{}
+		//config.Linux.GIDMappings = []specs.IDMapping{}
+	//}
 
 	// get mounts
 	mounts := map[string]bool{}
