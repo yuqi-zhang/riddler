@@ -119,7 +119,9 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 		Process: specs.Process{
 			Terminal: false,
 			User:     specs.User{
-			// TODO: user stuffs
+			// set uid/gid to 0 for syscontainers
+				UID: 0,
+				GID: 0,
 			},
 			Args: append([]string{c.Path}, c.Args...),
 			Env:  c.Config.Env,
@@ -173,29 +175,29 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 				},
 				//DisableOOMKiller: c.HostConfig.Resources.OomKillDisable,
 				//OOMScoreAdj:      &c.HostConfig.OomScoreAdj,
-				Memory: &specs.Memory{
-					Limit:       uint64ptr(c.HostConfig.Resources.Memory),
-					Reservation: uint64ptr(c.HostConfig.Resources.MemoryReservation),
-					Swap:        uint64ptr(c.HostConfig.Resources.MemorySwap),
-					Swappiness:  uint64ptr(*c.HostConfig.Resources.MemorySwappiness),
-					Kernel:      uint64ptr(c.HostConfig.Resources.KernelMemory),
-				},
-				CPU: &specs.CPU{
-					Shares: uint64ptr(c.HostConfig.Resources.CPUShares),
-					Quota:  uint64ptr(c.HostConfig.Resources.CPUQuota),
-					Period: uint64ptr(c.HostConfig.Resources.CPUPeriod),
-					Cpus:   &c.HostConfig.Resources.CpusetCpus,
-					Mems:   &c.HostConfig.Resources.CpusetMems,
-				},
-				Pids: &specs.Pids{
-					Limit: &c.HostConfig.Resources.PidsLimit,
-				},
-				BlockIO: &specs.BlockIO{
-					Weight: &c.HostConfig.Resources.BlkioWeight,
+				//Memory: &specs.Memory{
+					//Limit:       uint64ptr(c.HostConfig.Resources.Memory),
+					//Reservation: uint64ptr(c.HostConfig.Resources.MemoryReservation),
+					//Swap:        uint64ptr(c.HostConfig.Resources.MemorySwap),
+					//Swappiness:  uint64ptr(*c.HostConfig.Resources.MemorySwappiness),
+					//Kernel:      uint64ptr(c.HostConfig.Resources.KernelMemory),
+				//},
+				//CPU: &specs.CPU{
+					//Shares: uint64ptr(c.HostConfig.Resources.CPUShares),
+					//Quota:  uint64ptr(c.HostConfig.Resources.CPUQuota),
+					//Period: uint64ptr(c.HostConfig.Resources.CPUPeriod),
+					//Cpus:   &c.HostConfig.Resources.CpusetCpus,
+					//Mems:   &c.HostConfig.Resources.CpusetMems,
+				//},
+				//Pids: &specs.Pids{
+					//Limit: &c.HostConfig.Resources.PidsLimit,
+				//},
+				//BlockIO: &specs.BlockIO{
+					//Weight: &c.HostConfig.Resources.BlkioWeight,
 					// TODO: add parsing for Throttle/Weight Devices
-				},
+				//},
 			},
-			RootfsPropagation: "",
+			//RootfsPropagation: "",
 		},
 	}
 
