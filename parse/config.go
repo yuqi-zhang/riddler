@@ -120,7 +120,7 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 			Terminal: false,
 			User:     specs.User{
 			// set uid/gid to 0 for syscontainers
-				UID: 0,
+				UID: 1,
 				GID: 0,
 			},
 			Args: append([]string{c.Path}, c.Args...),
