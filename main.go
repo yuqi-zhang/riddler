@@ -15,7 +15,7 @@ import (
 	native "github.com/docker/docker/daemon/execdriver/native/template"
 	"github.com/docker/docker/pkg/platform"
 	"github.com/docker/engine-api/client"
-	"github.com/jfrazelle/riddler/parse"
+	"github.com/yuqi-zhang/riddler/parse"
 	specs "github.com/opencontainers/specs/specs-go"
 )
 
@@ -31,7 +31,7 @@ const (
 
 `
 	// VERSION is the binary version.
-	VERSION = "v0.1.0"
+	VERSION = "system-container-test"
 
 	specConfig = "config.json"
 )
@@ -45,6 +45,7 @@ var (
 	force      bool
 	idroot     uint32
 	idlen      uint32
+	system     bool
 
 	debug   bool
 	version bool
@@ -101,6 +102,8 @@ func init() {
 
 	flag.IntVar(&idrootVar, "idroot", 0, "Root UID/GID for user namespaces")
 	flag.IntVar(&idlenVar, "idlen", 0, "Length of UID/GID ID space ranges for user namespaces")
+
+	flag.BoolVar(&system, "system", false, "Generate a simple default config for system containers")
 
 	flag.BoolVar(&force, "force", false, "force overwrite existing files")
 	flag.BoolVar(&force, "f", false, "force overwrite existing files")
@@ -164,7 +167,7 @@ func main() {
 	}
 
 	t := native.New()
-	spec, err := parse.Config(c, platform.OSType, platform.Architecture, t.Capabilities, idroot, idlen)
+	spec, err := parse.Config(c, platform.OSType, platform.Architecture, t.Capabilities, idroot, idlen, system)
 	if err != nil {
 		logrus.Fatalf("Spec config conversion for %s failed: %v", arg, err)
 	}

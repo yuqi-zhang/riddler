@@ -13,7 +13,7 @@ import (
 
 const (
 	// SpecVersion is the version of the opencontainers spec that will be created.
-	SpecVersion = "0.3.0"
+	SpecVersion = "0.5.0"
 
 	// DefaultApparmorProfile is docker engine's default apparmor profile for containers.
 	DefaultApparmorProfile = "docker-default"
@@ -99,10 +99,13 @@ var (
 			Options:     []string{"rbind", "rprivate", "ro"},
 		},
 	}
+
+	// Some variables for system container generation
+	//terminal string
 )
 
 // Config takes ContainerJSON and converts it into the opencontainers spec.
-func Config(c types.ContainerJSON, osType, architecture string, capabilities []string, idroot, idlen uint32) (config *specs.Spec, err error) {
+func Config(c types.ContainerJSON, osType, architecture string, capabilities []string, idroot, idlen uint32, system bool) (config *specs.Spec, err error) {
 	// for user namespaces use defaults unless another range specified
 	if idroot == 0 {
 		idroot = DefaultUserNSHostID
@@ -110,96 +113,151 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 	if idlen == 0 {
 		idlen = DefaultUserNSMapSize
 	}
-	config = &specs.Spec{
-		Version: SpecVersion,
-		Platform: specs.Platform{
-			OS:   osType,
-			Arch: architecture,
-		},
-		Process: specs.Process{
-			Terminal: c.Config.Tty,
-			User:     specs.User{
-			// TODO: user stuffs
+
+	if !system {
+		config = &specs.Spec{
+			Version: SpecVersion,
+			Platform: specs.Platform{
+				OS:   osType,
+				Arch: architecture,
 			},
-			Args: append([]string{c.Path}, c.Args...),
-			Env:  c.Config.Env,
-			Cwd:  c.Config.WorkingDir,
-			// TODO: add parsing of Ulimits
-			Rlimits: []specs.Rlimit{
-				{
-					Type: "RLIMIT_NOFILE",
-					Hard: uint64(1024),
-					Soft: uint64(1024),
+			Process: specs.Process{
+				Terminal: c.Config.Tty,
+				User:     specs.User{
+				// TODO: user stuffs
 				},
-			},
-			NoNewPrivileges: true,
-			ApparmorProfile: c.AppArmorProfile,
-		},
-		Root: specs.Root{
-			Path:     "rootfs",
-			Readonly: c.HostConfig.ReadonlyRootfs,
-		},
-		Mounts: []specs.Mount{},
-		Linux: specs.Linux{
-			Namespaces: []specs.Namespace{
-				{
-					Type: "ipc",
-				},
-				{
-					Type: "uts",
-				},
-				{
-					Type: "mount",
-				},
-			},
-			UIDMappings: []specs.IDMapping{
-				{
-					ContainerID: 0,
-					HostID:      idroot,
-					Size:        idlen,
-				},
-			},
-			GIDMappings: []specs.IDMapping{
-				{
-					ContainerID: 0,
-					HostID:      idroot,
-					Size:        idlen,
-				},
-			},
-			Resources: &specs.Resources{
-				Devices: []specs.DeviceCgroup{
+				Args: append([]string{c.Path}, c.Args...),
+				Env:  c.Config.Env,
+				Cwd:  c.Config.WorkingDir,
+				// TODO: add parsing of Ulimits
+				Rlimits: []specs.Rlimit{
 					{
-						Allow:  false,
-						Access: sPtr("rwm"),
+						Type: "RLIMIT_NOFILE",
+						Hard: uint64(1024),
+						Soft: uint64(1024),
 					},
 				},
-				DisableOOMKiller: c.HostConfig.Resources.OomKillDisable,
-				OOMScoreAdj:      &c.HostConfig.OomScoreAdj,
-				Memory: &specs.Memory{
-					Limit:       uint64ptr(c.HostConfig.Resources.Memory),
-					Reservation: uint64ptr(c.HostConfig.Resources.MemoryReservation),
-					Swap:        uint64ptr(c.HostConfig.Resources.MemorySwap),
-					Swappiness:  uint64ptr(*c.HostConfig.Resources.MemorySwappiness),
-					Kernel:      uint64ptr(c.HostConfig.Resources.KernelMemory),
+				NoNewPrivileges: true,
+				ApparmorProfile: c.AppArmorProfile,
+			},
+			Root: specs.Root{
+				Path:     "rootfs",
+				Readonly: c.HostConfig.ReadonlyRootfs,
+			},
+			Mounts: []specs.Mount{},
+			Linux: specs.Linux{
+				Namespaces: []specs.Namespace{
+					{
+						Type: "ipc",
+					},
+					{
+						Type: "uts",
+					},
+					{
+						Type: "mount",
+					},
 				},
-				CPU: &specs.CPU{
-					Shares: uint64ptr(c.HostConfig.Resources.CPUShares),
-					Quota:  uint64ptr(c.HostConfig.Resources.CPUQuota),
-					Period: uint64ptr(c.HostConfig.Resources.CPUPeriod),
-					Cpus:   &c.HostConfig.Resources.CpusetCpus,
-					Mems:   &c.HostConfig.Resources.CpusetMems,
+				UIDMappings: []specs.IDMapping{
+					{
+						ContainerID: 0,
+						HostID:      idroot,
+						Size:        idlen,
+					},
 				},
-				Pids: &specs.Pids{
-					Limit: &c.HostConfig.Resources.PidsLimit,
+				GIDMappings: []specs.IDMapping{
+					{
+						ContainerID: 0,
+						HostID:      idroot,
+						Size:        idlen,
+					},
 				},
-				BlockIO: &specs.BlockIO{
-					Weight: &c.HostConfig.Resources.BlkioWeight,
-					// TODO: add parsing for Throttle/Weight Devices
+				Resources: &specs.Resources{
+					Devices: []specs.DeviceCgroup{
+						{
+							Allow:  false,
+							Access: sPtr("rwm"),
+						},
+					},
+					DisableOOMKiller: c.HostConfig.Resources.OomKillDisable,
+					OOMScoreAdj:      &c.HostConfig.OomScoreAdj,
+					Memory: &specs.Memory{
+						Limit:       uint64ptr(c.HostConfig.Resources.Memory),
+						Reservation: uint64ptr(c.HostConfig.Resources.MemoryReservation),
+						Swap:        uint64ptr(c.HostConfig.Resources.MemorySwap),
+						Swappiness:  uint64ptr(*c.HostConfig.Resources.MemorySwappiness),
+						Kernel:      uint64ptr(c.HostConfig.Resources.KernelMemory),
+					},
+					CPU: &specs.CPU{
+						Shares: uint64ptr(c.HostConfig.Resources.CPUShares),
+						Quota:  uint64ptr(c.HostConfig.Resources.CPUQuota),
+						Period: uint64ptr(c.HostConfig.Resources.CPUPeriod),
+						Cpus:   &c.HostConfig.Resources.CpusetCpus,
+						Mems:   &c.HostConfig.Resources.CpusetMems,
+					},
+					Pids: &specs.Pids{
+						Limit: &c.HostConfig.Resources.PidsLimit,
+					},
+					BlockIO: &specs.BlockIO{
+						Weight: &c.HostConfig.Resources.BlkioWeight,
+						// TODO: add parsing for Throttle/Weight Devices
+					},
+				},
+				RootfsPropagation: "",
+			},
+		}
+	} else {
+		config = &specs.Spec{
+			Version: SpecVersion,
+			Platform: specs.Platform{
+				OS:   osType,
+				Arch: architecture,
+			},
+			Process: specs.Process{
+				Terminal: false,
+				User:     specs.User{
+					UID: 0,
+					GID: 0,
+				},
+				Args: append([]string{c.Path}, c.Args...),
+				Env:  c.Config.Env,
+				Cwd:  c.Config.WorkingDir,
+				Rlimits: []specs.Rlimit{
+					{
+						Type: "RLIMIT_NOFILE",
+						Hard: uint64(1024),
+						Soft: uint64(1024),
+					},
 				},
 			},
-			RootfsPropagation: "",
-		},
+			Root: specs.Root{
+				Path:     "rootfs",
+				Readonly: true,
+			},
+			Mounts: []specs.Mount{},
+			Linux: specs.Linux{
+				Namespaces: []specs.Namespace{
+					{
+						Type: "ipc",
+					},
+					{
+						Type: "uts",
+					},
+					{
+						Type: "mount",
+					},
+				},
+				Resources: &specs.Resources{
+					Devices: []specs.DeviceCgroup{
+						{
+							Allow:  false,
+							Access: sPtr("rwm"),
+						},
+					},
+				},
+			},
+		}
 	}
+
 
 	// make sure the current working directory is not blank
 	if config.Process.Cwd == "" {
@@ -207,7 +265,7 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 	}
 
 	// get the user
-	if c.Config.User != "" {
+	if c.Config.User != "" && !system {
 		u, err := user.LookupUser(c.Config.User)
 		if err != nil {
 			config.Process.User = specs.User{
@@ -230,7 +288,7 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 
 	// get the hostname, if the hostname is the name as the first 12 characters of the id,
 	// then set the hostname as the container name
-	if c.ID[:12] == c.Config.Hostname {
+	if c.ID[:12] == c.Config.Hostname && !system {
 		config.Hostname = strings.TrimPrefix(c.Name, "/")
 	}
 
@@ -275,7 +333,7 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 	}
 
 	// check namespaces
-	if !c.HostConfig.NetworkMode.IsHost() {
+	if !c.HostConfig.NetworkMode.IsHost() && !system {
 		config.Linux.Namespaces = append(config.Linux.Namespaces, specs.Namespace{
 			Type: "network",
 		})
@@ -285,7 +343,7 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 			Type: "pid",
 		})
 	}
-	if c.HostConfig.UsernsMode.Valid() && !c.HostConfig.NetworkMode.IsHost() && !c.HostConfig.PidMode.IsHost() && !c.HostConfig.Privileged {
+	if c.HostConfig.UsernsMode.Valid() && !c.HostConfig.NetworkMode.IsHost() && !c.HostConfig.PidMode.IsHost() && !c.HostConfig.Privileged && !system {
 		config.Linux.Namespaces = append(config.Linux.Namespaces, specs.Namespace{
 			Type: "user",
 		})
@@ -347,14 +405,16 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 		return nil, err
 	}
 
-	// parse devices
-	if err := parseDevices(config, c.HostConfig); err != nil {
-		return nil, err
-	}
+	if !system {
+		// parse devices
+		if err := parseDevices(config, c.HostConfig); err != nil {
+			return nil, err
+		}
 
-	// parse security opt
-	if err := parseSecurityOpt(config, c.HostConfig); err != nil {
-		return nil, err
+		// parse security opt
+		if err := parseSecurityOpt(config, c.HostConfig); err != nil {
+			return nil, err
+		}
 	}
 
 	// set privileged
