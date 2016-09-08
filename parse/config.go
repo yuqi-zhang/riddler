@@ -105,7 +105,7 @@ var (
 )
 
 // Config takes ContainerJSON and converts it into the opencontainers spec.
-func Config(c types.ContainerJSON, osType, architecture string, capabilities []string, idroot, idlen uint32, system bool) (config *specs.Spec, err error) {
+func Config(c types.ContainerJSON, osType, architecture string, capabilities []string, idroot, idlen uint32, system bool, args, env []string) (config *specs.Spec, err error) {
 	// for user namespaces use defaults unless another range specified
 	if idroot == 0 {
 		idroot = DefaultUserNSHostID
@@ -258,6 +258,14 @@ func Config(c types.ContainerJSON, osType, architecture string, capabilities []s
 		}
 	}
 
+
+	if len(args) > 0 {
+		config.Process.Args = args
+	}
+
+	if len(env) > 0 {
+		config.Process.Env = append(config.Process.Env, env...)
+	}
 
 	// make sure the current working directory is not blank
 	if config.Process.Cwd == "" {

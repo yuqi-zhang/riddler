@@ -46,6 +46,8 @@ var (
 	idroot     uint32
 	idlen      uint32
 	system     bool
+	args       stringSlice
+	env        stringSlice
 
 	debug   bool
 	version bool
@@ -104,6 +106,8 @@ func init() {
 	flag.IntVar(&idlenVar, "idlen", 0, "Length of UID/GID ID space ranges for user namespaces")
 
 	flag.BoolVar(&system, "system", false, "Generate a simple default config for system containers")
+	flag.Var(&args, "args", "Specify custom args for process-args for")
+	flag.Var(&env, "env", "Specify extra enviroment variables, ex. --env env1")
 
 	flag.BoolVar(&force, "force", false, "force overwrite existing files")
 	flag.BoolVar(&force, "f", false, "force overwrite existing files")
@@ -167,7 +171,7 @@ func main() {
 	}
 
 	t := native.New()
-	spec, err := parse.Config(c, platform.OSType, platform.Architecture, t.Capabilities, idroot, idlen, system)
+	spec, err := parse.Config(c, platform.OSType, platform.Architecture, t.Capabilities, idroot, idlen, system, args, env)
 	if err != nil {
 		logrus.Fatalf("Spec config conversion for %s failed: %v", arg, err)
 	}
